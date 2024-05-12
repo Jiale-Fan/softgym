@@ -34,6 +34,8 @@ set(SOURCES ${SOURCES} ${ROOT}/bindings/opengl/shadersGL.cpp)
 set(FLEXHEADERS ${ROOT})
 set(FLEXLIB ${ROOT} ${ROOT}/lib/linux64 ${ROOT}/bindings ${ROOT}/external/SDL2-2.0.4/lib/x64)
 
+add_library(libc_compat ${ROOT}/bindings/libc_compat/libc_compat.c)
+
 pybind11_add_module(${EXAMPLE_BIN} ${SOURCES})
 target_include_directories(${EXAMPLE_BIN} PRIVATE ${FLEXHEADERS})
 target_include_directories(${EXAMPLE_BIN} PRIVATE ${FLEXLIB})
@@ -43,4 +45,8 @@ target_link_libraries(${EXAMPLE_BIN} PRIVATE ${ROOT}/lib/linux64/NvFlexReleaseCU
 target_link_libraries(${EXAMPLE_BIN} PRIVATE ${ROOT}/external/SDL2-2.0.4/lib/x64/libSDL2-2.0.so.0.4.0)
 target_link_libraries(${EXAMPLE_BIN} PRIVATE ${ROOT}/external/SDL2-2.0.4/lib/x64/libSDL2.a)
 target_link_libraries(${EXAMPLE_BIN} PRIVATE ${CUDA_LIBRARIES})
+
+
+target_link_libraries(${EXAMPLE_BIN} PRIVATE ${ROOT}/lib/linux64/NvFlexExtReleaseCUDA_x64.a)
+target_link_libraries(${EXAMPLE_BIN} PRIVATE libc_compat)
 
