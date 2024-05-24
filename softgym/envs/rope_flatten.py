@@ -59,13 +59,28 @@ class RopeFlattenEnv(RopeNewEnv):
             self.action_tool.reset([cx, 0.1, cy])
 
         # set reward range
-        self.reward_max = 0
-        self.reward_min = -self.rope_length
+        # self.reward_max = 0
+        # self.reward_min = -self.rope_length
+        # self.reward_range = self.reward_max - self.reward_min
+
+        self.reward_max = self.horizon*self.rope_length
+        self.reward_min = 0
         self.reward_range = self.reward_max - self.reward_min
 
+        # save intial key point positions
+
+        self.last_key_point_pos = self.get_key_point_vec()
+
         return self._get_obs()
+    
+    def get_key_point_vec(self):
+        particle_pos = np.array(pyflex.get_positions()).reshape([-1, 4])[:, :3]
+        keypoint_pos = particle_pos[self.key_point_indices, :3]
+        pos = keypoint_pos.flatten()
+        return pos
 
     def _step(self, action):
+
         if self.action_mode.startswith('picker'):
             self.action_tool.step(action)
             pyflex.step()
@@ -80,9 +95,29 @@ class RopeFlattenEnv(RopeNewEnv):
 
     def compute_reward(self, action=None, obs=None, set_prev_reward=False):
         """ Reward is the distance between the endpoints of the rope"""
-        curr_endpoint_dist = self._get_endpoint_distance()
-        curr_distance_diff = -np.abs(curr_endpoint_dist - self.rope_length)
-        r = curr_distance_diff
+
+        # original reward function
+        # curr_endpoint_dist = self._get_endpoint_distance()
+        # curr_distance_diff = -np.abs(curr_endpoint_dist - self.rope_length)
+        # r = curr_distance_diff
+        # return r
+
+        # This original may be problematic, as it does not encourage the right action to be taken nor exploration;
+        # Once the rope is at a reasonably large length, the agent will leave it there and not touch it,
+        # as in such way the reward is already pretty good.
+
+        # In the new reward function, any action will be rewarded as long as the rope moves. The reward is the current distance
+        # between the endpoints of the rope.
+
+        current_key_point_pos = self.get_key_point_vec()
+        keypoint_displacement = np.linalg.norm(current_key_point_pos - self.last_key_point_pos)
+        self.last_key_point_pos = current_key_point_pos
+
+        if keypoint_displacement < 0.01:
+            r = 0
+        else:
+            r = self._get_endpoint_distance()
+            
         return r
 
     def _get_info(self):

@@ -43,7 +43,7 @@ env_arg_dict = {
         'horizon': 75,
         'action_repeat': 8,
         'render_mode': 'cloth',
-        'num_variations': 1000,
+        'num_variations': 80,
         'use_cached_states': True,
         'deterministic': False
     },
@@ -66,7 +66,7 @@ env_arg_dict = {
                      'horizon': 100,
                      'action_repeat': 8,
                      'render_mode': 'cloth',
-                     'num_variations': 1000,
+                     'num_variations': 10,
                      'use_cached_states': True,
                      'deterministic': False},
     'ClothFlattenPPP': {'observation_mode': 'cam_rgb',

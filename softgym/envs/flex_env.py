@@ -151,6 +151,9 @@ class FlexEnv(gym.Env):
         del self.video_frames
 
     def reset(self, config=None, initial_state=None, config_id=None):
+        """
+            give config_id or give both config and initial_state
+        """
         if config is None:
             if config_id is None:
                 if self.eval_flag:
