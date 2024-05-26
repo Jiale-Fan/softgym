@@ -353,11 +353,11 @@ class PourWaterPosControlEnv(FluidEnv):
             return self.get_image(self.camera_width, self.camera_height)
         elif self.observation_mode == 'point_cloud':
             particle_pos = np.array(pyflex.get_positions()).reshape([-1, 4])[:, :3].flatten()
-            pos = np.zeros(shape=self.particle_obs_dim, dtype=np.float)
+            pos = np.zeros(shape=self.particle_obs_dim, dtype=np.float32)
             pos[:len(particle_pos)] = particle_pos
             return pos.flatten()
         elif 'key_point' in self.observation_mode:
-            pos = np.empty(0, dtype=np.float)
+            pos = np.empty(0, dtype=np.float32)
 
             water_state = pyflex.get_positions().reshape([-1, 4])
             in_poured_glass = self.in_glass(water_state, self.poured_glass_states, self.poured_border, self.poured_height)

@@ -81,8 +81,25 @@ class FlexEnv(gym.Env):
             with open(cached_states_path, "rb") as handle:
                 self.cached_configs, self.cached_init_states = pickle.load(handle)
             print('{} config and state pairs loaded from {}'.format(len(self.cached_init_states), cached_states_path))
-            if len(self.cached_configs) == num_variations:
+            if len(self.cached_configs) >= num_variations:
                 return self.cached_configs, self.cached_init_states
+            else:
+                print('Warning: {} config and state pairs loaded from {} is less than requested {}'.format(len(self.cached_init_states), cached_states_path, num_variations))
+                print("Trying to generate the rest...")
+                rest_num = num_variations - len(self.cached_configs)
+                while rest_num > 0:
+                    # since the generation often crashes, we save every 10
+                    new_cached_configs, new_cached_init_states = self.generate_env_variation(10)
+                    self.cached_configs += new_cached_configs
+                    self.cached_init_states += new_cached_init_states
+                    rest_num = num_variations - len(self.cached_configs)
+
+                    if self.save_cached_states:
+                        with open(cached_states_path, 'wb') as handle:
+                            pickle.dump((self.cached_configs, self.cached_init_states), handle, protocol=pickle.HIGHEST_PROTOCOL)
+                        print('{} config and state pairs generated and saved to {}'.format(len(self.cached_init_states), cached_states_path))
+                return self.cached_configs, self.cached_init_states
+
 
         self.cached_configs, self.cached_init_states = self.generate_env_variation(num_variations)
         if self.save_cached_states:
@@ -223,8 +240,22 @@ class FlexEnv(gym.Env):
             width, height = self.camera_params['default_camera']['width'], self.camera_params['default_camera']['height']
             img = img.reshape(height, width, 4)[::-1, :, :3]  # Need to reverse the height dimension
             return img
+        elif mode == 'depth':
+            img, depth = pyflex.render()
+            depth = depth.reshape((720, 720))[::-1]
+            # depth[depth > 5] = 0 # ??
+            return depth
         elif mode == 'human':
             raise NotImplementedError
+        
+    def get_depth(self, width=720, height=720):
+        """ use pyflex.render to get a rendered image. """
+        depth = self.render(mode='depth')
+        # depth = depth.astype(np.uint8) # ! depth pixel values are float
+        if width != depth.shape[0] or height != depth.shape[1]:
+            depth = cv2.resize(depth, (width, height))
+        return depth
+
 
     def get_image(self, width=720, height=720):
         """ use pyflex.render to get a rendered image. """

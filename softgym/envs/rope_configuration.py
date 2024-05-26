@@ -192,7 +192,7 @@ class RopeConfigurationEnv(RopeFlattenEnv):
 
         if self.observation_mode == 'point_cloud':
             particle_pos = np.array(pyflex.get_positions()).reshape([-1, 4])[:, :3].flatten()
-            pos = np.zeros(shape=self.particle_obs_dim, dtype=np.float)
+            pos = np.zeros(shape=self.particle_obs_dim, dtype=np.float32)
             pos[:len(particle_pos)] = particle_pos
             pos[len(particle_pos):] = self.current_config["goal_character_pos"][:, :3].flatten()
         elif self.observation_mode == 'key_point':

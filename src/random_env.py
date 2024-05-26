@@ -45,20 +45,20 @@ def show_point_cloud(pc_obs):
 def main():
     parser = argparse.ArgumentParser(description='Process some integers.')
     # ['PassWater', 'PourWater', 'PourWaterAmount', 'RopeFlatten', 'ClothFold', 'ClothFlatten', 'ClothDrop', 'ClothFoldCrumpled', 'ClothFoldDrop', 'RopeConfiguration']
-    parser.add_argument('--env_name', type=str, default='ClothFlatten')
+    parser.add_argument('--env_name', type=str, default='RopeFlatten')
     parser.add_argument('--headless', type=int, default=0, help='Whether to run the environment with headless rendering')
-    parser.add_argument('--num_variations', type=int, default=1, help='Number of environment variations to be generated')
+    parser.add_argument('--num_variations', type=int, default=10, help='Number of environment variations to be generated')
     parser.add_argument('--save_video_dir', type=str, default='./data/', help='Path to the saved video')
-    parser.add_argument('--img_size', type=int, default=720, help='Size of the recorded videos')
-    parser.add_argument('--test_depth', type=int, default=0, help='If to test the depth rendering by showing it')
+    parser.add_argument('--img_size', type=int, default=128, help='Size of the recorded videos')
+    parser.add_argument('--test_depth', type=int, default=1, help='If to test the depth rendering by showing it')
 
     args = parser.parse_args()
 
     env_kwargs = env_arg_dict[args.env_name]
 
     # Generate and save the initial states for running this environment for the first time
-    env_kwargs['use_cached_states'] = False
-    env_kwargs['save_cached_states'] = False
+    env_kwargs['use_cached_states'] = True
+    env_kwargs['save_cached_states'] = True
     env_kwargs['num_variations'] = args.num_variations
     env_kwargs['render'] = True
     env_kwargs['headless'] = args.headless
