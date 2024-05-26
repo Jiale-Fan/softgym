@@ -1,0 +1,7 @@
+Metadata-Version: 2.1
+Name: softgym
+Version: 0.1
+Summary: SoftGym: Benchmarking Deep Reinforcement Learning for Deformable Object Manipulation
+Home-page: https://github.com/Xingyu-Lin/softgym
+Author: Xingyu-Lin et al.
+License-File: LICENSE.txt

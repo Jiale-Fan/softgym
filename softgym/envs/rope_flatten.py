@@ -6,6 +6,15 @@ from softgym.envs.rope_env import RopeNewEnv
 from copy import deepcopy
 from softgym.utils.pyflex_utils import random_pick_and_place, center_object
 
+import math
+
+## not good for scaling the reward
+# def normpdf(x, mean, sd):
+#     var = float(sd)**2
+#     denom = (2*math.pi*var)**.5
+#     num = math.exp(-(float(x)-float(mean))**2/(2*var))
+#     return num/denom
+
 class RopeFlattenEnv(RopeNewEnv):
     def __init__(self, cached_states_path='rope_flatten_init_states.pkl', **kwargs):
         """
@@ -76,8 +85,7 @@ class RopeFlattenEnv(RopeNewEnv):
     def get_key_point_vec(self):
         particle_pos = np.array(pyflex.get_positions()).reshape([-1, 4])[:, :3]
         keypoint_pos = particle_pos[self.key_point_indices, :3]
-        pos = keypoint_pos.flatten()
-        return pos
+        return keypoint_pos # [10,3]
 
     def _step(self, action):
 
@@ -110,15 +118,23 @@ class RopeFlattenEnv(RopeNewEnv):
         # between the endpoints of the rope.
 
         current_key_point_pos = self.get_key_point_vec()
-        keypoint_displacement = np.linalg.norm(current_key_point_pos - self.last_key_point_pos)
+        keypoint_displacement = np.sum(np.linalg.norm(current_key_point_pos - self.last_key_point_pos, axis=1))
         self.last_key_point_pos = current_key_point_pos
 
-        if keypoint_displacement < 0.01:
-            r = 0
+        d = self._get_endpoint_distance()
+
+        if keypoint_displacement < 0.01: # the rope is not moving
+            if d > 0.95*self.rope_length: # if the rope is almost fully stretched, give a reward
+                r = d
+            else: # if the rope is not stretched, give no reward
+                r = 0
         else:
-            r = self._get_endpoint_distance()
+            r = d
+
+        com_pos = np.linalg.norm(np.mean(current_key_point_pos, axis=0))
+        coeff = 1 - (np.clip(com_pos, 0.5, 1.0)-0.5)/0.5
             
-        return r
+        return coeff*r
 
     def _get_info(self):
         curr_endpoint_dist = self._get_endpoint_distance()
