@@ -2,7 +2,7 @@ import numpy as np
 from gym.spaces import Box
 import pyflex
 from softgym.envs.flex_env import FlexEnv
-from softgym.action_space.action_space import Picker
+from softgym.action_space.action_space import Picker, DiscretePicker
 from softgym.action_space.robot_env import RobotBase
 from copy import deepcopy
 
@@ -21,6 +21,9 @@ class RopeNewEnv(FlexEnv):
         if action_mode == 'picker':
             self.action_tool = Picker(num_picker, picker_radius=picker_radius, picker_threshold=0.005, 
             particle_radius=0.025, picker_low=(-0.35, 0., -0.35), picker_high=(0.35, 0.3, 0.35))
+            ## The discrete picker is not compatible with curl-sac training code
+            # self.action_tool = DiscretePicker(num_picker, picker_radius=picker_radius, picker_threshold=0.005, 
+            # particle_radius=0.025, picker_low=(-0.35, 0., -0.35), picker_high=(0.35, 0.3, 0.35))
             self.action_space = self.action_tool.action_space
         elif action_mode in ['sawyer', 'franka']:
             self.action_tool = RobotBase(action_mode)

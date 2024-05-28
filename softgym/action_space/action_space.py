@@ -1,6 +1,6 @@
 import abc
 import numpy as np
-from gym.spaces import Box
+from gym.spaces import Box, Discrete
 from softgym.utils.misc import rotation_2d_around_center, extend_along_center
 import pyflex
 import scipy.spatial
@@ -17,6 +17,8 @@ class ActionToolBase(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def step(self, action):
         """ Step funciton to change the action space states. Does not call pyflex.step() """
+
+
 
 
 class Picker(ActionToolBase):
@@ -40,9 +42,10 @@ class Picker(ActionToolBase):
         self.init_particle_pos = init_particle_pos
         self.spring_coef = spring_coef  # Prevent picker to drag two particles too far away
 
-        space_low = np.array([-0.1, -0.1, -0.1, 0] * self.num_picker) * 0.1  # [dx, dy, dz, [0, 1]]
-        space_high = np.array([0.1, 0.1, 0.1, 10] * self.num_picker) * 0.1
+        space_low = np.array([-0.01, -0.01, -0.01, 0] * self.num_picker) # [dx, dy, dz, [0, 1]]
+        space_high = np.array([0.01, 0.01, 0.01, 1] * self.num_picker) 
         self.action_space = Box(space_low, space_high, dtype=np.float32)
+
 
     def update_picker_boundary(self, picker_low, picker_high):
         self.picker_low, self.picker_high = np.array(picker_low).copy(), np.array(picker_high).copy()
@@ -180,6 +183,29 @@ class Picker(ActionToolBase):
                         new_particle_pos[picked_particle_idices[j], :3] = particle_pos[picked_particle_idices[j], :3].copy()
 
         self._set_pos(new_picker_pos, new_particle_pos)
+
+### for VI
+class DiscretePicker(Picker):
+    """
+    CURRENTLY NOT COMPATIBLE WITH CURL_SAC TRAINING CODE
+        Currently can only handle 1 picker!
+        The action space is 3^3 * 2, where the first 3^3 is the direction of the picker, and the last 2 is the pick/drop action.
+        The value of non-zero direction is set by hand, make sure it is consistent with the base class.
+    """
+    def __init__(self, num_picker=1, picker_radius=0.05, init_pos=(0., -0.1, 0.), picker_threshold=0.005, particle_radius=0.05,
+                 picker_low=(-0.4, 0., -0.4), picker_high=(0.4, 0.5, 0.4), init_particle_pos=None, spring_coef=1.2, **kwargs):
+        super().__init__(num_picker=num_picker, picker_radius=picker_radius, init_pos=init_pos, picker_threshold=picker_threshold,
+                         particle_radius=particle_radius, picker_low=picker_low, picker_high=picker_high,
+                         init_particle_pos=init_particle_pos, spring_coef=spring_coef, **kwargs)
+        self.action_space = Discrete((3**3)*2)
+        a = 0.01
+        self.direction_list = [[x, y, z] for x, y, z in zip(*np.meshgrid(*([[-a, 0, a]]*3)))]
+        self.discrete_action_map = [direction + [0.] for direction in self.direction_list] + [direction + [1.] for direction in self.direction_list]
+
+    def step(self, action):
+        action = self.discrete_action_map[action]
+        return super().step(action)
+
 
 
 class PickerPickPlace(Picker):
